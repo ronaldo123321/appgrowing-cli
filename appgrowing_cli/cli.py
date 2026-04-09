@@ -1529,21 +1529,12 @@ def _build_creative_payload_from_api(
 @click.group()
 @click.option("--json", "json_output", is_flag=True, default=True, show_default=True)
 @click.option("--no-validate", is_flag=True, default=False, help="Skip schema validation.")
-@click.option(
-    "--source",
-    "source_mode",
-    type=click.Choice(["api"], case_sensitive=False),
-    default="api",
-    show_default=True,
-    help="Data source mode: real AppGrowing API only.",
-)
 @click.pass_context
-def main(ctx: click.Context, json_output: bool, no_validate: bool, source_mode: str) -> None:
+def main(ctx: click.Context, json_output: bool, no_validate: bool) -> None:
     """AppGrowing monitoring CLI."""
     ctx.ensure_object(dict)
     ctx.obj["json_output"] = json_output
     ctx.obj["validate"] = not no_validate
-    ctx.obj["source_mode"] = source_mode.lower()
     auth_data = load_auth()
     ctx.obj["auth"] = auth_data
     ctx.obj["api_client"] = AppGrowingClient(

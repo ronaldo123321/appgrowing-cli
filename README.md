@@ -4,7 +4,7 @@
 
 ## Goal
 
-把飞书文档《AppGrowing竞品监控流程》里的核心流程落地为可重复执行的命令行工作流：
+把AppGrowing竞品监控流程的核心流程落地为可重复执行的命令行工作流：
 
 - 投放趋势：双周期对比、排名变化、竞品筛选、下钻分析
 - 创意趋势：头部素材格局、新头部创意、新创意趋势
@@ -56,10 +56,10 @@ appgrowing auth login
 appgrowing auth login --from-browser chrome
 
 # 查看登录态和 API 探测
-appgrowing --source api auth status
+appgrowing auth status
 
 # 跑聚合创意洞察（只使用真实 API）
-python3 -m appgrowing_cli.cli --source api trend creative-insights \
+appgrowing trend creative-insights \
   --keyword "Translate" \
   --start 2026-04-03 --end 2026-04-09 \
   --top-rank-limit 15 --min-rank-change 3 --pick-top-n 3 \
@@ -68,15 +68,15 @@ python3 -m appgrowing_cli.cli --source api trend creative-insights \
   --csv-file ./out_real/creative-insights.csv
 ```
 
-## Install via uv tool
+## Quick Install (Users)
 
-发布到 PyPI 后，推荐用 `uv tool` 安装（隔离环境，适合 CLI）：
+推荐用 `uv tool` 安装（隔离环境，适合 CLI）：
 
 ```bash
 # install
 uv tool install appgrowing-cli
 
-# run
+# verify
 appgrowing --help
 
 # upgrade
@@ -86,26 +86,22 @@ uv tool upgrade appgrowing-cli
 uv tool uninstall appgrowing-cli
 ```
 
-如果你要指定某个版本：
+如果你要固定某个版本：
 
 ```bash
 uv tool install appgrowing-cli==0.1.0
 ```
 
-## Publish to PyPI
+首次使用建议先完成登录态配置：
 
 ```bash
-# 1) bump version in pyproject.toml
-# e.g. version = "0.1.1"
+# 登录（自动从浏览器读取 .youcloud.com Cookie）
+appgrowing auth login
 
-# 2) build distributions
-uv build
-
-# 3) publish (using PyPI token)
-uv publish --token "<PYPI_TOKEN>"
+# 检查 API 登录态
+appgrowing auth status
 ```
 
-发布完成后，其他人即可直接执行 `uv tool install appgrowing-cli` 使用。
 
 ## Promote Ranking Commands
 
@@ -113,7 +109,7 @@ uv publish --token "<PYPI_TOKEN>"
 
 ```bash
 # 1) 单周期榜单（可分别跑“本周”和“上周”）
-python3 -m appgrowing_cli.cli --source api trend promote-ranking snapshot \
+appgrowing trend promote-ranking snapshot \
   --keyword "Calorie" \
   --start 2026-03-10 --end 2026-04-08 \
   --purpose 2 \
@@ -125,7 +121,7 @@ python3 -m appgrowing_cli.cli --source api trend promote-ranking snapshot \
   --top-n 10
 
 # 2) 双周期对比（输出排名/素材数等变化）
-python3 -m appgrowing_cli.cli --source api trend promote-ranking compare \
+appgrowing trend promote-ranking compare \
   --keyword "Calorie" \
   --this-start 2026-03-10 --this-end 2026-04-08 \
   --last-start 2026-02-10 --last-end 2026-03-09 \
@@ -185,7 +181,7 @@ python3 -m appgrowing_cli.cli --source api trend promote-ranking compare \
 示例：
 
 ```bash
-python3 -m appgrowing_cli.cli --source api trend competitor-table \
+appgrowing trend competitor-table \
   --keyword "Translate" \
   --start 2026-04-03 --end 2026-04-09 \
   --top-rank-limit 15 \
@@ -214,7 +210,7 @@ python3 -m appgrowing_cli.cli --source api trend competitor-table \
 - 对每个分组按“尺寸去重”输出摘要与样例素材链接
 
 ```bash
-python3 -m appgrowing_cli.cli --source api trend creative-insights \
+appgrowing trend creative-insights \
   --keyword "Translate" \
   --start 2026-04-03 --end 2026-04-09 \
   --top-rank-limit 15 \
@@ -242,7 +238,7 @@ python3 -m appgrowing_cli.cli --source api trend creative-insights \
 - 语言分布占比 TopN（`language_distribution_top`）
 
 ```bash
-python3 -m appgrowing_cli.cli --source api trend app-distribution \
+appgrowing trend app-distribution \
   --app-brand-id "3J-GwYqX47mmemoSELy7ZQ==" \
   --start 2025-10-12 \
   --end 2026-04-09 \
@@ -270,7 +266,7 @@ python3 -m appgrowing_cli.cli --source api trend app-distribution \
 - Top10 图片素材链接
 
 ```bash
-python3 -m appgrowing_cli.cli --source api trend app-material-insights \
+appgrowing trend app-material-insights \
   --app-brand-id "3J-GwYqX47mmemoSELy7ZQ==" \
   --this-start 2026-04-03 \
   --this-end 2026-04-09 \
@@ -292,7 +288,7 @@ python3 -m appgrowing_cli.cli --source api trend app-material-insights \
 - `top_image_materials[]`（`material_id`, `size`, `duration_ms`, `link`）
 
 > 说明：
-> - 现已接入真实 AppGrowing GraphQL 适配层（`--source api`）。
+> - 现已固定使用真实 AppGrowing GraphQL API。
 > - `auth login` 只支持自动抽取浏览器 Cookie（优先 `uv run --with browser-cookie3` 子进程，失败再本进程兜底）。
 > - `trend ranking snapshot/compare` 支持重复传入 `--keyword`（多关键词聚合）和 `--pages`（分页抓取）。
 > - `trend ranking snapshot/compare` 支持 `--accurate-search` 与 `--order`，用于对齐网页筛选行为（默认 `0` + `material_cnt_desc`）。
