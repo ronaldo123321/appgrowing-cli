@@ -1,0 +1,29 @@
+{
+  "app": {
+    "name": "Owll: AI Note Taker",
+    "slug": "owll"
+  },
+  "keywords": [
+    "ai note taker",
+    "meeting transcription",
+    "lecture recorder"
+  ],
+  "market": ["US", "UK", "SG"],
+  "period": {
+    "start": "2026-03-01",
+    "end": "2026-03-31"
+  },
+  "baseline_period": {
+    "start": "2026-02-01",
+    "end": "2026-02-28"
+  },
+  "mvp_app_ids": ["app_owll_001"],
+  "material_id_by_keyword": {
+    "ai note taker": "replace_with_real_material_id"
+  },
+  "filters": {
+    "top_n": 15,
+    "min_rank_change": 3,
+    "pages": 1
+  }
+}

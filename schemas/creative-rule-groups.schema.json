@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Creative Rule Groups",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ok",
+    "data_source",
+    "keywords",
+    "this_period",
+    "last_period",
+    "selection_rules",
+    "rules",
+    "query_options",
+    "meta",
+    "competitors",
+    "generated_at"
+  ],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "data_source": { "type": "string", "const": "api" },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "this_period": {
+      "type": "object",
+      "required": ["start", "end", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "start": { "type": "string" },
+        "end": { "type": "string" },
+        "label": { "type": "string" }
+      }
+    },
+    "last_period": {
+      "type": "object",
+      "required": ["start", "end", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "start": { "type": "string" },
+        "end": { "type": "string" },
+        "label": { "type": "string" }
+      }
+    },
+    "selection_rules": { "type": "object" },
+    "rules": { "type": "object" },
+    "query_options": { "type": "object" },
+    "meta": { "type": "object" },
+    "competitors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["keyword", "app_brand_id", "product_name", "groups"],
+        "additionalProperties": true,
+        "properties": {
+          "keyword": { "type": "string" },
+          "app_brand_id": { "type": "string" },
+          "product_name": { "type": "string" },
+          "groups": { "type": "object" }
+        }
+      }
+    },
+    "generated_at": { "type": "string" }
+  }
+}

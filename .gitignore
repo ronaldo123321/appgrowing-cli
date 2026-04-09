@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.cursor/
+.DS_Store
+chrome_data/
+.pytest_cache/
+.ruff_cache/
+dist/
+*.egg-info/
+chrome_driver/
+chrome_data/
+doc/
+.idea/
+appgrowing_cli.egg-info/
+docs/
+out_real/

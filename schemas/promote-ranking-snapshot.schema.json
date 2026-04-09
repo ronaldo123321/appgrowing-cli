@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Promote Ranking Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ok",
+    "data_source",
+    "keyword",
+    "period",
+    "market",
+    "accurate_search",
+    "order",
+    "purpose",
+    "items",
+    "generated_at"
+  ],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "data_source": { "type": "string", "const": "api" },
+    "keyword": { "type": "string" },
+    "period": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "string" },
+        "end": { "type": "string" }
+      }
+    },
+    "market": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "accurate_search": { "type": "integer" },
+    "order": { "type": "string" },
+    "purpose": { "type": "integer" },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "rank",
+          "app_id",
+          "app_name",
+          "country",
+          "publish_platform",
+          "media_info",
+          "ad_count",
+          "material_count",
+          "video_fragment_count"
+        ],
+        "properties": {
+          "rank": { "type": "integer" },
+          "app_id": { "type": "string" },
+          "app_name": { "type": "string" },
+          "country": { "type": "string" },
+          "publish_platform": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "media_info": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "name"],
+              "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string" }
+              }
+            }
+          },
+          "ad_count": { "type": "integer" },
+          "material_count": { "type": "integer" },
+          "video_fragment_count": { "type": "integer" }
+        }
+      }
+    },
+    "generated_at": { "type": "string" }
+  }
+}

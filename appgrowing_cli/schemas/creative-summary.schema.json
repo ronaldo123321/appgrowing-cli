@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://appgrowing-cli.local/schemas/creative-summary.schema.json",
+  "title": "CreativeSummary",
+  "type": "object",
+  "required": ["ok", "data_source", "mode", "keyword", "period", "items", "generated_at"],
+  "properties": {
+    "ok": { "type": "boolean", "const": true },
+    "data_source": { "type": "string", "const": "api" },
+    "mode": {
+      "type": "string",
+      "enum": ["top_head", "new_head", "new_tail"]
+    },
+    "keyword": { "type": "string", "minLength": 1 },
+    "period": {
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "string", "format": "date" },
+        "end": { "type": "string", "format": "date" }
+      },
+      "additionalProperties": false
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["creative_id", "app_id", "app_name", "material_type", "size", "cover_cluster"],
+        "properties": {
+          "creative_id": { "type": "string", "minLength": 1 },
+          "app_id": { "type": "string", "minLength": 1 },
+          "app_name": { "type": "string", "minLength": 1 },
+          "material_type": { "type": "string", "enum": ["image", "video"] },
+          "size": { "type": "string", "minLength": 1 },
+          "is_new": { "type": "boolean" },
+          "impression_total": { "type": ["number", "null"], "minimum": 0 },
+          "cover_cluster": { "type": "string", "minLength": 1 },
+          "language": { "type": ["string", "null"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "cluster_summary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["cluster", "count"],
+        "properties": {
+          "cluster": { "type": "string", "minLength": 1 },
+          "count": { "type": "integer", "minimum": 0 },
+          "sample_creative_ids": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "generated_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

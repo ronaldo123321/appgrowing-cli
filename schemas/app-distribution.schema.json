@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "App Distribution",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ok",
+    "data_source",
+    "app_brand_id",
+    "period",
+    "purpose",
+    "dimension",
+    "market",
+    "channel_distribution",
+    "continent_distribution",
+    "language_distribution_top",
+    "meta",
+    "generated_at"
+  ],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "data_source": { "type": "string", "const": "api" },
+    "app_brand_id": { "type": "string" },
+    "period": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "string" },
+        "end": { "type": "string" }
+      }
+    },
+    "purpose": { "type": "integer" },
+    "dimension": { "type": "string" },
+    "market": { "type": "array", "items": { "type": "string" } },
+    "channel_distribution": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["channel_id", "channel_name", "adverts", "material", "ratio"],
+        "properties": {
+          "channel_id": { "type": "string" },
+          "channel_name": { "type": "string" },
+          "adverts": { "type": "integer" },
+          "material": { "type": "integer" },
+          "ratio": { "type": ["number", "null"] }
+        }
+      }
+    },
+    "continent_distribution": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["continent", "material", "adverts", "ratio"],
+        "properties": {
+          "continent": { "type": "string" },
+          "material": { "type": "integer" },
+          "adverts": { "type": "integer" },
+          "ratio": { "type": ["number", "null"] }
+        }
+      }
+    },
+    "language_distribution_top": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["language_code", "language_name", "adverts", "material", "ratio"],
+        "properties": {
+          "language_code": { "type": "string" },
+          "language_name": { "type": "string" },
+          "adverts": { "type": "integer" },
+          "material": { "type": "integer" },
+          "ratio": { "type": ["number", "null"] }
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channel_rows", "region_rows", "language_rows", "language_error"],
+      "properties": {
+        "channel_rows": { "type": "integer" },
+        "region_rows": { "type": "integer" },
+        "language_rows": { "type": "integer" },
+        "language_error": { "type": ["string", "null"] }
+      }
+    },
+    "generated_at": { "type": "string" }
+  }
+}

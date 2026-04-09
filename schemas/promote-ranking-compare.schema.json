@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Promote Ranking Compare",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ok",
+    "data_source",
+    "keyword",
+    "this_period",
+    "last_period",
+    "items",
+    "generated_at"
+  ],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "data_source": { "type": "string", "const": "api" },
+    "keyword": { "type": "string" },
+    "this_period": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "string" },
+        "end": { "type": "string" }
+      }
+    },
+    "last_period": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "string" },
+        "end": { "type": "string" }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "app_id",
+          "app_name",
+          "country",
+          "publish_platform",
+          "media_info",
+          "current_rank",
+          "previous_rank",
+          "rank_change",
+          "ad_count_current",
+          "ad_count_previous",
+          "ad_count_change",
+          "material_count_current",
+          "material_count_previous",
+          "material_count_change",
+          "video_fragment_count_current",
+          "video_fragment_count_previous",
+          "video_fragment_count_change"
+        ],
+        "properties": {
+          "app_id": { "type": "string" },
+          "app_name": { "type": "string" },
+          "country": { "type": "string" },
+          "publish_platform": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "media_info": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "name"],
+              "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string" }
+              }
+            }
+          },
+          "current_rank": { "type": ["integer", "null"] },
+          "previous_rank": { "type": ["integer", "null"] },
+          "rank_change": { "type": ["integer", "null"] },
+          "ad_count_current": { "type": "integer" },
+          "ad_count_previous": { "type": "integer" },
+          "ad_count_change": { "type": "integer" },
+          "material_count_current": { "type": "integer" },
+          "material_count_previous": { "type": "integer" },
+          "material_count_change": { "type": "integer" },
+          "video_fragment_count_current": { "type": "integer" },
+          "video_fragment_count_previous": { "type": "integer" },
+          "video_fragment_count_change": { "type": "integer" }
+        }
+      }
+    },
+    "generated_at": { "type": "string" }
+  }
+}

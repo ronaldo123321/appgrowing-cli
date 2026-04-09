@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "App Material Insights",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ok",
+    "data_source",
+    "app_brand_id",
+    "this_period",
+    "last_period",
+    "purpose",
+    "material_count_current",
+    "material_count_previous",
+    "material_count_change",
+    "material_count_change_ratio",
+    "top_video_materials",
+    "top_image_materials",
+    "meta",
+    "generated_at"
+  ],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "data_source": { "type": "string", "const": "api" },
+    "app_brand_id": { "type": "string" },
+    "this_period": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "string" },
+        "end": { "type": "string" }
+      }
+    },
+    "last_period": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "string" },
+        "end": { "type": "string" }
+      }
+    },
+    "purpose": { "type": "integer" },
+    "material_count_current": { "type": "integer" },
+    "material_count_previous": { "type": "integer" },
+    "material_count_change": { "type": "integer" },
+    "material_count_change_ratio": { "type": ["number", "null"] },
+    "top_video_materials": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["material_id", "size", "duration_ms", "link"],
+        "properties": {
+          "material_id": { "type": "string" },
+          "size": { "type": "string" },
+          "duration_ms": { "type": ["integer", "null"] },
+          "link": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "top_image_materials": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["material_id", "size", "duration_ms", "link"],
+        "properties": {
+          "material_id": { "type": "string" },
+          "size": { "type": "string" },
+          "duration_ms": { "type": ["integer", "null"] },
+          "link": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["current_rows", "previous_rows", "video_rows", "image_rows", "video_error", "image_error"],
+      "properties": {
+        "current_rows": { "type": "integer" },
+        "previous_rows": { "type": "integer" },
+        "video_rows": { "type": "integer" },
+        "image_rows": { "type": "integer" },
+        "video_error": { "type": ["string", "null"] },
+        "image_error": { "type": ["string", "null"] }
+      }
+    },
+    "generated_at": { "type": "string" }
+  }
+}

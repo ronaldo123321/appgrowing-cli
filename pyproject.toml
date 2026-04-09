@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "appgrowing-cli"
+version = "0.1.0"
+description = "CLI scaffold for AppGrowing competitive monitoring workflows."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "click>=8.1.7",
+  "jsonschema>=4.22.0",
+  "browser-cookie3>=0.19.1"
+]
+
+[project.scripts]
+appgrowing = "appgrowing_cli.cli:main"
+
+[tool.setuptools]
+packages = ["appgrowing_cli", "appgrowing_cli.schemas"]
+
+[tool.setuptools.package-data]
+appgrowing_cli = ["schemas/*.json"]

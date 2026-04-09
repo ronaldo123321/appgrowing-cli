@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://appgrowing-cli.local/schemas/trend-ranking-snapshot.schema.json",
+  "title": "TrendRankingSnapshot",
+  "type": "object",
+  "required": ["ok", "data_source", "keyword", "this_period", "last_period", "items", "generated_at"],
+  "properties": {
+    "ok": { "type": "boolean", "const": true },
+    "data_source": { "type": "string", "const": "api" },
+    "keyword": { "type": "string", "minLength": 1 },
+    "this_period": {
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "string", "format": "date" },
+        "end": { "type": "string", "format": "date" }
+      },
+      "additionalProperties": false
+    },
+    "last_period": {
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "string", "format": "date" },
+        "end": { "type": "string", "format": "date" }
+      },
+      "additionalProperties": false
+    },
+    "market": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "app_id",
+          "product_name",
+          "appgrowing_link",
+          "system_platform",
+          "current_rank",
+          "previous_rank",
+          "rank_change",
+          "ad_count_current",
+          "ad_count_previous",
+          "ad_count_change_ratio",
+          "material_count_current",
+          "material_count_previous",
+          "material_count_change_ratio"
+        ],
+        "properties": {
+          "app_id": { "type": "string", "minLength": 1 },
+          "product_name": { "type": "string", "minLength": 1 },
+          "appgrowing_link": { "type": "string", "minLength": 1 },
+          "system_platform": { "type": "string", "minLength": 1 },
+          "current_rank": { "type": ["integer", "null"], "minimum": 1 },
+          "previous_rank": { "type": ["integer", "null"], "minimum": 1 },
+          "rank_change": { "type": ["integer", "null"] },
+          "ad_count_current": { "type": "integer", "minimum": 0 },
+          "ad_count_previous": { "type": "integer", "minimum": 0 },
+          "ad_count_change_ratio": { "type": ["number", "null"] },
+          "material_count_current": { "type": "integer", "minimum": 0 },
+          "material_count_previous": { "type": "integer", "minimum": 0 },
+          "material_count_change_ratio": { "type": ["number", "null"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "generated_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

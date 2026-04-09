@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://appgrowing-cli.local/schemas/monitor-run-result.schema.json",
+  "title": "MonitorRunResult",
+  "type": "object",
+  "required": [
+    "ok",
+    "data_source",
+    "run_id",
+    "request",
+    "artifacts",
+    "summary",
+    "generated_at"
+  ],
+  "properties": {
+    "ok": { "type": "boolean", "const": true },
+    "data_source": { "type": "string", "const": "api" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "request": { "type": "object" },
+    "artifacts": {
+      "type": "object",
+      "required": [
+        "trend_compare_json",
+        "creative_top_head_json",
+        "creative_new_head_json",
+        "creative_new_tail_json",
+        "table_metrics_json",
+        "requirements_coverage_json",
+        "report_md"
+      ],
+      "properties": {
+        "trend_compare_json": { "type": "string", "minLength": 1 },
+        "creative_top_head_json": { "type": "string", "minLength": 1 },
+        "creative_new_head_json": { "type": "string", "minLength": 1 },
+        "creative_new_tail_json": { "type": "string", "minLength": 1 },
+        "table_metrics_json": { "type": "string", "minLength": 1 },
+        "requirements_coverage_json": { "type": "string", "minLength": 1 },
+        "report_md": { "type": "string", "minLength": 1 },
+        "csv_exports": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": false
+    },
+    "summary": {
+      "type": "object",
+      "required": ["tracked_keywords", "selected_competitors"],
+      "properties": {
+        "tracked_keywords": { "type": "integer", "minimum": 1 },
+        "selected_competitors": { "type": "integer", "minimum": 0 },
+        "mvp_rank_changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["app_id", "app_name", "rank_change"],
+            "properties": {
+              "app_id": { "type": "string", "minLength": 1 },
+              "app_name": { "type": "string", "minLength": 1 },
+              "rank_change": { "type": ["integer", "null"] }
+            },
+            "additionalProperties": false
+          }
+        },
+        "alerts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["level", "message"],
+            "properties": {
+              "level": { "type": "string", "enum": ["info", "warn", "critical"] },
+              "message": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "generated_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}
