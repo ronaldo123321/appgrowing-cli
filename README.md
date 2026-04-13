@@ -228,11 +228,8 @@ appgrowing trend creative-insights \
 
 兼容说明：
 
-- 旧命令 `creative-rule-groups` 仍可用（向后兼容），建议后续统一改为 `creative-insights`。
 - `--material-pages` 默认只抓前几页；传 `--material-pages 0` 可自动翻完全部分页。
 - `--top-material-details` 默认关闭；开启后主查询会直接切换到带明细字段的 `appMaterialList`。
-- 明细是同一批 `materialList` 返回里的素材属性快照，不再额外补第二轮查询，也不再逐个调用 `creativeList(material_id=...)`。
-- 如果开启了 `--top-material-details` 且上游 `appMaterialList` 失败，命令会直接报错，因为这时明细已经是主查询结果的一部分。
 
 本次工程调整：
 
