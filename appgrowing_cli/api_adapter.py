@@ -528,6 +528,95 @@ query appMaterialList(
 """
 
 
+APP_MATERIAL_LIST_DETAIL_QUERY = """
+query appMaterialList(
+  $purpose: Int!
+  $startDate: LocalDate
+  $endDate: LocalDate
+  $isNew: Int
+  $field: String
+  $order: MaterialListSort!
+  $page: Int
+  $accurateSearch: Int
+  $appBrand: String
+) {
+  materialList(
+    purpose: $purpose
+    startDate: $startDate
+    endDate: $endDate
+    isNew: $isNew
+    field: $field
+    order: $order
+    page: $page
+    accurateSearch: $accurateSearch
+    appBrand: $appBrand
+  ) {
+    page
+    total
+    limit
+    data {
+      material {
+        id
+        type
+        startDate
+        endDate
+        duration
+        cnt_ad_id
+        impression_inc_2y
+        area {
+          cc
+          name
+          icon
+        }
+        creative {
+          id
+          type
+          slogan
+          description
+          txtUrl
+          resource {
+            width
+            height
+            format
+            path
+            poster
+            duration
+            id
+          }
+        }
+        platform {
+          id
+          name
+        }
+        campaign {
+          ... on App {
+            id
+            name
+          }
+          ... on AppBrand {
+            id
+            name
+          }
+          ... on Website {
+            id
+            name
+          }
+          ... on Playlet {
+            id
+            name
+          }
+          ... on Novel {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
 @dataclass
 class AppGrowingClient:
     """GraphQL client for AppGrowing global endpoint."""
@@ -1180,6 +1269,7 @@ class AppGrowingClient:
         order: str = "impression_inc_2y_desc",
         is_new: int = 1,
         pages: int = 1,
+        detailed: bool = False,
     ) -> dict[str, Any]:
         """Fetch app material list and aggregate total/data across pages.
 
@@ -1211,7 +1301,6 @@ class AppGrowingClient:
                 "purpose": purpose,
                 "startDate": start_date,
                 "endDate": end_date,
-                "creativeType": creative_types or self._default_creative_types(),
                 "isNew": is_new,
                 "field": "all",
                 "order": order,
@@ -1219,13 +1308,15 @@ class AppGrowingClient:
                 "accurateSearch": accurate_search,
                 "appBrand": app_brand_id,
             }
-            if material_ratio:
+            if not detailed:
+                variables["creativeType"] = creative_types or self._default_creative_types()
+            if material_ratio and not detailed:
                 variables["materialRatio"] = material_ratio
             for attempt in range(retry_attempts):
                 try:
                     data = self.graphql(
                         operation_name="appMaterialList",
-                        query=APP_MATERIAL_LIST_QUERY,
+                        query=APP_MATERIAL_LIST_DETAIL_QUERY if detailed else APP_MATERIAL_LIST_QUERY,
                         variables=variables,
                     )
                     root = data.get("materialList")

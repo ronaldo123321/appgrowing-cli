@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "appgrowing-cli"
-version = "0.1.1"
+version = "0.1.2"
 description = "CLI scaffold for AppGrowing competitive monitoring workflows."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -22,3 +22,8 @@ packages = ["appgrowing_cli", "appgrowing_cli.schemas"]
 
 [tool.setuptools.package-data]
 appgrowing_cli = ["schemas/*.json"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]

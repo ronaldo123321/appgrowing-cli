@@ -14,7 +14,7 @@ import click
 from appgrowing_cli.api_adapter import AppGrowingAPIError, AppGrowingClient
 from appgrowing_cli.auth_store import extract_browser_auth, load_auth, save_auth
 from appgrowing_cli.schema import validate_payload
-from appgrowing_cli.utils import load_json_file, utc_now_iso, write_json_file, write_text_file
+from appgrowing_cli.utils import load_json_file, utc_now_iso, write_json_file
 
 
 def _emit(ctx: click.Context, payload: dict[str, Any]) -> None:
@@ -826,6 +826,105 @@ def _build_top_material_links(rows: list[dict[str, Any]], *, kind: str, top_n: i
     return items
 
 
+def _material_detail_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    max_areas = 5
+
+    def _append_unique_text(values: list[str], seen: set[str], raw: Any) -> None:
+        text = str(raw or "").strip()
+        if not text or text in seen:
+            return
+        seen.add(text)
+        values.append(text)
+
+    def _append_unique_area(
+        values: list[dict[str, str]],
+        seen: set[tuple[str, str]],
+        area: Any,
+    ) -> None:
+        if len(values) >= max_areas:
+            return
+        if not isinstance(area, dict):
+            return
+        cc = str(area.get("cc") or "").strip()
+        name = str(area.get("name") or "").strip()
+        if not cc and not name:
+            return
+        key = (cc, name)
+        if key in seen:
+            return
+        seen.add(key)
+        values.append({"cc": cc, "name": name})
+
+    details: list[dict[str, Any]] = []
+    for row in rows:
+        material = row.get("material") if isinstance(row.get("material"), dict) else {}
+        material_id = str(material.get("id") or "").strip()
+        if not material_id:
+            continue
+        captions: list[str] = []
+        caption_seen: set[str] = set()
+        areas: list[dict[str, str]] = []
+        area_seen: set[tuple[str, str]] = set()
+        platforms: list[str] = []
+        platform_seen: set[str] = set()
+        campaigns: list[str] = []
+        campaign_seen: set[str] = set()
+        creative = material.get("creative") if isinstance(material.get("creative"), dict) else {}
+        slogan = creative.get("slogan") if isinstance(creative, dict) else None
+        _append_unique_text(captions, caption_seen, slogan)
+        raw_areas = material.get("area")
+        if isinstance(raw_areas, list):
+            for area in raw_areas:
+                _append_unique_area(areas, area_seen, area)
+        elif isinstance(raw_areas, dict):
+            _append_unique_area(areas, area_seen, raw_areas)
+        raw_platforms = material.get("platform")
+        if isinstance(raw_platforms, list):
+            for platform in raw_platforms:
+                _append_unique_text(platforms, platform_seen, platform.get("name") if isinstance(platform, dict) else None)
+        elif isinstance(raw_platforms, dict):
+            _append_unique_text(platforms, platform_seen, raw_platforms.get("name"))
+        raw_campaigns = material.get("campaign")
+        if isinstance(raw_campaigns, list):
+            for campaign in raw_campaigns:
+                _append_unique_text(campaigns, campaign_seen, campaign.get("name") if isinstance(campaign, dict) else None)
+        elif isinstance(raw_campaigns, dict):
+            _append_unique_text(campaigns, campaign_seen, raw_campaigns.get("name"))
+        details.append(
+            {
+                "material_id": material_id,
+                "size": _material_size_key(material),
+                "duration_ms": _parse_int_maybe(_primary_resource(material).get("duration")) or None,
+                "link": _extract_material_link(material, _detect_material_kind(material)),
+                "captions": captions,
+                "areas": areas,
+                "platforms": platforms,
+                "campaigns": campaigns,
+                "creative_count": _parse_int_maybe(material.get("cnt_ad_id")),
+                "impression_inc_2y": str(material.get("impression_inc_2y") or "").strip() or None,
+                "first_seen": str(material.get("startDate") or "").strip() or None,
+                "last_seen": str(material.get("endDate") or "").strip() or None,
+            }
+        )
+    return details
+
+
+def _material_id_from_row(row: dict[str, Any]) -> str:
+    material = row.get("material") if isinstance(row.get("material"), dict) else {}
+    return str(material.get("id") or "").strip()
+
+
+def _material_row_index(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    index: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        material_id = _material_id_from_row(row)
+        if material_id and material_id not in index:
+            index[material_id] = row
+    return index
+
+
 def _size_ratio_bucket(material: dict[str, Any]) -> str:
     resource = _primary_resource(material)
     width = _parse_int_maybe(resource.get("width"))
@@ -877,6 +976,8 @@ def _summarize_material_bucket(
     *,
     material_kind: str,
     sample_n: int = 5,
+    top_material_details: int = 0,
+    detail_row_index: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     filtered = _filter_rows_by_kind_and_ratio(rows, kind=material_kind)
     unique_by_size: dict[str, dict[str, Any]] = {}
@@ -892,7 +993,7 @@ def _summarize_material_bucket(
     unique_rows = list(unique_by_size.values())
     all_links = _build_top_material_links(unique_rows, kind=material_kind, top_n=len(unique_rows))
     sample_links = all_links[:sample_n]
-    return {
+    payload = {
         "material_kind": material_kind,
         "raw_count": len(filtered),
         "unique_size_count": len(unique_rows),
@@ -903,14 +1004,39 @@ def _summarize_material_bucket(
         "materials": all_links,
         "sample_materials": sample_links,
     }
+    if top_material_details > 0:
+        detail_rows = [
+            detail_row_index.get(_material_id_from_row(row), row)
+            if isinstance(detail_row_index, dict)
+            else row
+            for row in unique_rows[:top_material_details]
+        ]
+        payload["material_details"] = _material_detail_rows(detail_rows)
+    return payload
 
 
-def _summarize_rule_group(rows: list[dict[str, Any]], *, name: str) -> dict[str, Any]:
+def _summarize_rule_group(
+    rows: list[dict[str, Any]],
+    *,
+    name: str,
+    top_material_details: int = 0,
+    detail_row_index: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     return {
         "group_name": name,
         "total_rows": len(rows),
-        "image": _summarize_material_bucket(rows, material_kind="image"),
-        "video": _summarize_material_bucket(rows, material_kind="video"),
+        "image": _summarize_material_bucket(
+            rows,
+            material_kind="image",
+            top_material_details=top_material_details,
+            detail_row_index=detail_row_index,
+        ),
+        "video": _summarize_material_bucket(
+            rows,
+            material_kind="video",
+            top_material_details=top_material_details,
+            detail_row_index=detail_row_index,
+        ),
     }
 
 
@@ -925,7 +1051,10 @@ def _build_creative_rule_groups_for_app(
     top_head_percent: int,
     new_head_percent: int,
     new_trend_percent: int,
+    markets: tuple[str, ...] = (),
+    top_material_details: int = 0,
 ) -> dict[str, Any]:
+    detailed = top_material_details > 0
     all_material_payload = client.app_material_list(
         app_brand_id=app_brand_id,
         start_date=start,
@@ -934,6 +1063,7 @@ def _build_creative_rule_groups_for_app(
         is_new=0,
         order="impression_inc_2y_desc",
         pages=material_pages,
+        detailed=detailed,
     )
     new_material_payload = client.app_material_list(
         app_brand_id=app_brand_id,
@@ -943,6 +1073,7 @@ def _build_creative_rule_groups_for_app(
         is_new=1,
         order="impression_inc_2y_desc",
         pages=material_pages,
+        detailed=detailed,
     )
 
     all_rows = (
@@ -956,14 +1087,32 @@ def _build_creative_rule_groups_for_app(
         else []
     )
 
+    all_detail_index = _material_row_index(all_rows) if detailed else {}
+    new_detail_index = _material_row_index(new_rows) if detailed else {}
+
     head_rows = _slice_top_percent(all_rows, top_head_percent)
     new_head_rows = _slice_top_percent(new_rows, new_head_percent)
     new_trend_rows = _slice_bottom_percent(new_rows, new_trend_percent)
 
-    return {
-        "head_landscape": _summarize_rule_group(head_rows, name="头部素材格局"),
-        "new_head_creative": _summarize_rule_group(new_head_rows, name="新头部创意"),
-        "new_creative_trend": _summarize_rule_group(new_trend_rows, name="新创意趋势"),
+    result = {
+        "head_landscape": _summarize_rule_group(
+            head_rows,
+            name="头部素材格局",
+            top_material_details=top_material_details,
+            detail_row_index=all_detail_index,
+        ),
+        "new_head_creative": _summarize_rule_group(
+            new_head_rows,
+            name="新头部创意",
+            top_material_details=top_material_details,
+            detail_row_index=new_detail_index,
+        ),
+        "new_creative_trend": _summarize_rule_group(
+            new_trend_rows,
+            name="新创意趋势",
+            top_material_details=top_material_details,
+            detail_row_index=new_detail_index,
+        ),
         "meta": {
             "all_material_total": _parse_int_maybe(all_material_payload.get("total")),
             "new_material_total": _parse_int_maybe(new_material_payload.get("total")),
@@ -971,6 +1120,7 @@ def _build_creative_rule_groups_for_app(
             "new_rows_fetched": len(new_rows),
         },
     }
+    return result
 
 
 def _rule_group_text(group: dict[str, Any]) -> str:
@@ -2149,6 +2299,13 @@ def trend_app_material_insights(
 @click.option("--top-head-percent", default=10, show_default=True, type=click.IntRange(1, 100))
 @click.option("--new-head-percent", default=20, show_default=True, type=click.IntRange(1, 100))
 @click.option("--new-trend-percent", default=20, show_default=True, type=click.IntRange(1, 100))
+@click.option(
+    "--top-material-details",
+    default=0,
+    show_default=True,
+    type=click.IntRange(0),
+    help="For each group and material kind, enrich the top N materials with creative detail rows.",
+)
 @click.option("--out-file", type=click.Path(), help="Write payload to JSON file.")
 @click.option("--csv-file", type=click.Path(), help="Write summary table to CSV file.")
 @click.pass_context
@@ -2169,6 +2326,7 @@ def trend_creative_rule_groups(
     top_head_percent: int,
     new_head_percent: int,
     new_trend_percent: int,
+    top_material_details: int,
     out_file: str | None,
     csv_file: str | None,
 ) -> None:
@@ -2226,6 +2384,8 @@ def trend_creative_rule_groups(
                 top_head_percent=top_head_percent,
                 new_head_percent=new_head_percent,
                 new_trend_percent=new_trend_percent,
+                markets=markets,
+                top_material_details=top_material_details,
             )
         except AppGrowingAPIError as exc:
             raise click.ClickException(f"Material fetch failed for app={app_brand_id}: {exc}") from exc
@@ -2294,6 +2454,7 @@ def trend_creative_rule_groups(
             "accurate_search": accurate_search,
             "ranking_pages": ranking_pages,
             "material_pages": material_pages,
+            "top_material_details": top_material_details,
         },
         "meta": {"selected_competitors_count": len(competitor_results)},
         "competitors": competitor_results,
