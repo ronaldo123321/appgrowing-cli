@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://appgrowing-cli.local/schemas/app-search.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ok",
+    "data_source",
+    "queries",
+    "purpose",
+    "accurate_search",
+    "had_advert_only",
+    "pages",
+    "count",
+    "results",
+    "generated_at"
+  ],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "data_source": { "type": "string" },
+    "queries": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "purpose": { "type": "integer" },
+    "accurate_search": { "type": "integer", "enum": [0, 1] },
+    "had_advert_only": { "type": "boolean" },
+    "pages": { "type": "integer", "minimum": 1 },
+    "count": { "type": "integer", "minimum": 0 },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "query",
+          "rank",
+          "app_brand_id",
+          "app_name",
+          "appgrowing_link",
+          "publish_platform",
+          "developer",
+          "bundle_id",
+          "app_id",
+          "icon",
+          "types",
+          "had_advert",
+          "highlight"
+        ],
+        "properties": {
+          "query": { "type": "string" },
+          "rank": { "type": "integer", "minimum": 1 },
+          "app_brand_id": { "type": "string" },
+          "app_name": { "type": "string" },
+          "appgrowing_link": { "type": ["string", "null"] },
+          "publish_platform": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "developer": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name"],
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" }
+            }
+          },
+          "bundle_id": { "type": "string" },
+          "app_id": { "type": "string" },
+          "icon": {},
+          "types": { "type": "array" },
+          "had_advert": { "type": "boolean" },
+          "highlight": {}
+        }
+      }
+    },
+    "generated_at": { "type": "string" }
+  }
+}

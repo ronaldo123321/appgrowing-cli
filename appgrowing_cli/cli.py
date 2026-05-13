@@ -337,6 +337,36 @@ def _publish_platforms_from_app_brand(app_brand: dict[str, Any]) -> list[str]:
     return platforms
 
 
+def _map_search_app_row(
+    *,
+    row: dict[str, Any],
+    query: str,
+    rank: int,
+    purpose: int,
+) -> dict[str, Any]:
+    app_brand = row.get("appBrand") if isinstance(row.get("appBrand"), dict) else {}
+    developer = app_brand.get("developer") if isinstance(app_brand.get("developer"), dict) else {}
+    app_brand_id = str(app_brand.get("id") or "")
+    return {
+        "query": query,
+        "rank": rank,
+        "app_brand_id": app_brand_id,
+        "app_name": str(app_brand.get("name") or ""),
+        "appgrowing_link": _appgrowing_app_link(app_brand_id, purpose=purpose) if app_brand_id else None,
+        "publish_platform": _publish_platforms_from_app_brand(app_brand),
+        "developer": {
+            "id": str(developer.get("id") or ""),
+            "name": str(developer.get("name") or ""),
+        },
+        "bundle_id": str(app_brand.get("bundle_id") or ""),
+        "app_id": str(app_brand.get("app_id") or ""),
+        "icon": app_brand.get("icon"),
+        "types": app_brand.get("types") if isinstance(app_brand.get("types"), list) else [],
+        "had_advert": bool(row.get("hadAdvert")),
+        "highlight": row.get("highlight"),
+    }
+
+
 def _map_promote_row(
     *,
     row: dict[str, Any],
@@ -1774,6 +1804,110 @@ def auth_status(ctx: click.Context) -> None:
 @main.group()
 def trend() -> None:
     """Trend analysis commands."""
+
+
+@trend.command("app-search")
+@click.option("--query", "queries", required=True, multiple=True, type=str, help="App, brand, or developer name to search.")
+@click.option("--purpose", default=2, show_default=True, type=int)
+@click.option("--pages", default=1, show_default=True, type=int)
+@click.option("--accurate-search", default=0, show_default=True, type=click.IntRange(0, 1))
+@click.option(
+    "--had-advert/--include-no-advert",
+    default=True,
+    show_default=True,
+    help="Limit results to apps with ads, or include apps without ads.",
+)
+@click.option("--out-file", type=click.Path(), help="Write payload to JSON file.")
+@click.option("--csv-file", type=click.Path(), help="Write app search results to CSV file.")
+@click.pass_context
+def trend_app_search(
+    ctx: click.Context,
+    queries: tuple[str, ...],
+    purpose: int,
+    pages: int,
+    accurate_search: int,
+    had_advert: bool,
+    out_file: str | None,
+    csv_file: str | None,
+) -> None:
+    if pages < 1:
+        raise click.ClickException("--pages must be >= 1.")
+    query_list = [q.strip() for q in queries if q.strip()]
+    if not query_list:
+        raise click.ClickException("At least one --query is required.")
+
+    client = _api_client_from_ctx(ctx)
+    results: list[dict[str, Any]] = []
+    for query in query_list:
+        try:
+            rows = client.search_app_multi_page(
+                keyword=query,
+                purpose=purpose,
+                pages=pages,
+                accurate_search=accurate_search,
+                had_advert=1 if had_advert else None,
+            )
+        except AppGrowingAPIError as exc:
+            raise click.ClickException(f"App search failed for query={query}: {exc}") from exc
+        results.extend(
+            _map_search_app_row(row=row, query=query, rank=idx, purpose=purpose)
+            for idx, row in enumerate(rows, start=1)
+            if isinstance(row, dict)
+        )
+
+    payload: dict[str, Any] = {
+        "ok": True,
+        "data_source": "api",
+        "queries": query_list,
+        "purpose": purpose,
+        "accurate_search": accurate_search,
+        "had_advert_only": had_advert,
+        "pages": pages,
+        "count": len(results),
+        "results": results,
+        "generated_at": utc_now_iso(),
+    }
+    _validate_if_enabled(ctx, "app-search.schema.json", payload)
+    if out_file:
+        write_json_file(Path(out_file), payload)
+    if csv_file:
+        _write_csv_rows(
+            Path(csv_file),
+            [
+                "query",
+                "rank",
+                "app_brand_id",
+                "app_name",
+                "appgrowing_link",
+                "publish_platform",
+                "developer_id",
+                "developer_name",
+                "bundle_id",
+                "app_id",
+                "had_advert",
+            ],
+            [
+                {
+                    "query": item.get("query"),
+                    "rank": item.get("rank"),
+                    "app_brand_id": item.get("app_brand_id"),
+                    "app_name": item.get("app_name"),
+                    "appgrowing_link": item.get("appgrowing_link"),
+                    "publish_platform": _platform_names(item.get("publish_platform", [])),
+                    "developer_id": (item.get("developer") or {}).get("id")
+                    if isinstance(item.get("developer"), dict)
+                    else "",
+                    "developer_name": (item.get("developer") or {}).get("name")
+                    if isinstance(item.get("developer"), dict)
+                    else "",
+                    "bundle_id": item.get("bundle_id"),
+                    "app_id": item.get("app_id"),
+                    "had_advert": item.get("had_advert"),
+                }
+                for item in results
+            ],
+        )
+    _emit(ctx, payload)
 
 
 @trend.group("ranking")

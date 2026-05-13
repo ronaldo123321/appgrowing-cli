@@ -22,6 +22,7 @@ appgrowing trend ranking snapshot --keyword "ai note taker" --start 2026-03-01 -
 appgrowing trend ranking compare --keyword "ai note taker" --this-start 2026-03-01 --this-end 2026-03-31 --last-start 2026-02-01 --last-end 2026-02-28 --accurate-search 0 --order material_cnt_desc
 appgrowing trend promote-ranking snapshot --keyword "ai note taker" --start 2026-03-24 --end 2026-03-31 --accurate-search 0 --order material_cnt_desc
 appgrowing trend promote-ranking compare --keyword "ai note taker" --this-start 2026-03-24 --this-end 2026-03-31 --last-start 2026-03-17 --last-end 2026-03-23 --accurate-search 0 --order material_cnt_desc
+appgrowing trend app-search --query "Blue Cat" --purpose 2 --pages 1 --csv-file ./out_real/app-search.csv
 appgrowing trend app-distribution --app-brand-id "<app_brand_id>" --start 2026-03-10 --end 2026-04-08 --purpose 2 --top-n 10
 appgrowing trend app-material-insights --app-brand-id "<app_brand_id>" --this-start 2026-04-03 --this-end 2026-04-09 --last-start 2026-03-27 --last-end 2026-04-02 --purpose 2 --top-n 10
 appgrowing trend creative-insights --keyword "translate" --start 2026-04-03 --end 2026-04-09 --top-rank-limit 15 --min-rank-change 3 --pick-top-n 3 --out-file ./out_real/creative-rule-groups.json --csv-file ./out_real/creative-rule-groups.csv
@@ -67,6 +68,60 @@ appgrowing trend creative-insights \
   --out-file ./out_real/creative-insights.json \
   --csv-file ./out_real/creative-insights.csv
 ```
+
+## Independent App Search
+
+`trend app-search` 是一个独立 App/Brand 搜索入口，不依赖关键词排名榜。
+
+这个入口用于补齐关键词驱动工作流的盲区：有些重要竞品不会稳定出现在目标关键词的 Top 排名里，但从收入、投放规模、人工观察或外部情报看，仍然需要进入竞品池。此时可以先按 App 名、品牌名或开发者名搜索，拿到 `app_brand_id`，再接后续单 App 下钻命令。
+
+```bash
+appgrowing trend app-search \
+  --query "Blue Cat" \
+  --purpose 2 \
+  --pages 1 \
+  --csv-file ./out_real/app-search.csv
+```
+
+核心输出字段：
+
+- `app_brand_id`：AppGrowing 的品牌 ID，可继续传给 `--app-brand-id`
+- `app_name` / `developer`：用于人工确认是否匹配目标竞品
+- `publish_platform`：`ios` / `android`
+- `bundle_id` / `app_id`：Android 包名和 iOS App Store ID
+- `had_advert`：是否有投放记录
+- `appgrowing_link`：AppGrowing 控制台链接
+
+默认只返回有投放记录的 App；如果要包含未投放 App，加 `--include-no-advert`。
+
+拿到 `app_brand_id` 后，可以继续跑：
+
+```bash
+# 单 App 素材规模和 Top 素材
+appgrowing trend app-material-insights \
+  --app-brand-id "<app_brand_id>" \
+  --this-start 2026-04-03 \
+  --this-end 2026-04-09 \
+  --last-start 2026-03-27 \
+  --last-end 2026-04-02 \
+  --purpose 2
+
+# 单 App 渠道、地区、语言分布
+appgrowing trend app-distribution \
+  --app-brand-id "<app_brand_id>" \
+  --start 2026-04-03 \
+  --end 2026-04-09 \
+  --purpose 2
+```
+
+本地真实 API 验证示例：
+
+```bash
+uv run appgrowing auth status
+uv run appgrowing trend app-search --query "Blue Cat" --purpose 2 --pages 1
+```
+
+验证结果：`auth status` 返回 `ok: true`，`app-search` 返回 60 条结果，第一条为 `Blue Cat-Voice Translator`，其 `app_brand_id` 为 `7OmK7WnkwB8vsAd8df6vSg==`。
 
 ## Quick Install (Users)
 
@@ -318,6 +373,11 @@ appgrowing trend app-material-insights \
 >   - 输出 `channel_distribution`（渠道占比）
 >   - 输出 `continent_distribution`（国家地区按大洲聚合占比）
 >   - 输出 `language_distribution_top`（语言分布 TopN；默认 10）
+> - 新增 `trend app-search`（基于 `searchAppBrand`）：
+>   - 支持按 App 名、品牌名或开发者名独立搜索，不依赖关键词榜单排名。
+>   - 输出 `app_brand_id/app_name/developer/publish_platform/bundle_id/app_id/had_advert/appgrowing_link`。
+>   - 默认只返回有投放记录的 App；传 `--include-no-advert` 可包含未投放 App。
+>   - 典型用途是先找出关键词榜单之外的重要竞品，再接 `app-material-insights` / `app-distribution` 做下钻分析。
 > - 趋势查询优先对齐页面 `promoteAppList` 链路（如你抓包所示）。
 > - 当前版本API 错误会直接失败并返回错误信息。
 > - 若遇到权限或枚举值限制，可通过环境变量覆盖排序枚举：

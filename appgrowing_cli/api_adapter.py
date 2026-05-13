@@ -717,27 +717,49 @@ class AppGrowingClient:
         user = data.get("userinfo")
         return {"ok": True, "userinfo_type": user.get("__typename") if isinstance(user, dict) else None}
 
-    def search_app(self, keyword: str, purpose: int = 1, page: int = 1) -> list[dict[str, Any]]:
+    def search_app(
+        self,
+        keyword: str,
+        purpose: int = 1,
+        page: int = 1,
+        accurate_search: int = 0,
+        had_advert: int | None = 1,
+    ) -> list[dict[str, Any]]:
+        variables: dict[str, Any] = {
+            "purpose": purpose,
+            "keyword": keyword,
+            "accurateSearch": accurate_search,
+            "page": page,
+        }
+        if had_advert is not None:
+            variables["hadAdvert"] = had_advert
         data = self.graphql(
             operation_name="searchApp",
             query=SEARCH_APP_QUERY,
-            variables={
-                "purpose": purpose,
-                "keyword": keyword,
-                "accurateSearch": 0,
-                "hadAdvert": 1,
-                "page": page,
-            },
+            variables=variables,
         )
         result = data.get("searchAppBrand") or {}
         items = result.get("data") if isinstance(result, dict) else []
         return items if isinstance(items, list) else []
 
-    def search_app_multi_page(self, keyword: str, purpose: int = 1, pages: int = 1) -> list[dict[str, Any]]:
+    def search_app_multi_page(
+        self,
+        keyword: str,
+        purpose: int = 1,
+        pages: int = 1,
+        accurate_search: int = 0,
+        had_advert: int | None = 1,
+    ) -> list[dict[str, Any]]:
         """Fetch search results across multiple pages."""
         merged: list[dict[str, Any]] = []
         for page in range(1, max(1, pages) + 1):
-            items = self.search_app(keyword=keyword, purpose=purpose, page=page)
+            items = self.search_app(
+                keyword=keyword,
+                purpose=purpose,
+                page=page,
+                accurate_search=accurate_search,
+                had_advert=had_advert,
+            )
             if not items:
                 break
             merged.extend(items)
